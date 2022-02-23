@@ -1,29 +1,38 @@
 exports.handler = function(event, ctx, cb){
+    console.log(JSON.stringify(event))
     var 
       my_response = {};
-      if(event.currentIntent.slots.city_str){
+      if(event.sessionState.intent.slots.city_str){
           // we have the city already awesome keep going
       }else{
           //we need to ask for (elicit) a city
           my_response.statusCode = 200;
           my_response.body = {
-              "dialogAction": {
-                  "type": "ElicitSlot",
-                  "message": {
+              "sessionState": {
+                  "dialogAction": {
+                      "type": "ElicitSlot",
+                      "slotToElicit" : "city_str",
+                  },
+                  "intent": {
+                      "name": "CatWeather",
+                      "slots": {
+                          "city_str": null
+                      },
+                      "state": "InProgress"
+                  }
+              },
+              "messages": [
+                  {
                       "contentType": "PlainText",
                       "content": "Name the city your cat lives in, thanks"
-                  },
-                  "intentName": "CatWeather",
-                  "slots": {
-                      "city_str": null
-                  },
-                  "slotToElicit" : "city_str"
-              }
+                  }
+              ]
+              
           };
           return cb(null, my_response.body);
       }
       var
-          city_str = event.currentIntent.slots.city_str,
+          city_str = event.sessionState.intent.slots.city_str.value.originalValue,
           AWS = require("aws-sdk"),
           DDB = new AWS.DynamoDB({
               apiVersion: "2012-08-10",
@@ -52,37 +61,64 @@ exports.handler = function(event, ctx, cb){
               console.log(data.Items[0]);
               my_response.statusCode = 200;
               my_response.body = {
-                  "sessionAttributes": {
-                      "temp_str": data.Items[0].t.N,
-                      "city_str": event.currentIntent.slots.city_str
+                  "sessionState": {
+                      "sessionAttributes": {
+                          "temp_str": data.Items[0].t.N,
+                          "city_str": city_str
+                      },
+                      "dialogAction":{
+                          "type": "Close"
+                      },
+                      "intent": {
+                          "name":"CatWeather",
+                          "slots":{
+                              "city_str": {
+                                  "shape": "Scalar",
+                                  "value": {
+                                      "originalValue": city_str,
+                                      "interpretedValue": lookup_name_str
+                                  }
+                              }
+                          },
+                          "state": "Fulfilled"
+                      }
                   },
-                  "dialogAction":{
-                      "type": "Close",
-                      "fulfillmentState": "Fulfilled",
-                      "message": {
+                  "messages": [
+                      {
                           "contentType": "PlainText",
                           "content": data.Items[0].t.N
                       }
-                  }
+                  ]
+                  
               };
           }else{
               console.log("city weather not found for " + lookup_name_str);
               my_response.statusCode = 200;
               my_response.body = {
-                  "dialogAction": {
-                      "type": "ElicitSlot",
-                      "message": {
+                  "sessionState": {
+                      "dialogAction": {
+                          "type": "ElicitSlot",
+                          "slotToElicit" : "city_str",
+                      },
+                      "intent": {
+                          "name": "CatWeather",
+                          "slots": {
+                              "city_str": null
+                          },
+                          "state": "InProgress"
+                      }
+                  },
+                  "messages": [
+                      {
                           "contentType": "PlainText",
                           "content": "Please try another city, we couldn't find the weather for that city"
-                      },
-                      "intentName": "CatWeather",
-                      "slots": {
-                          "city_str": null
-                      },
-                      "slotToElicit" : "city_str"
-                  }
-              }
+                      }
+                  ]
+                  
+              };
+              
           }
+          console.log("Response: " + JSON.stringify(my_response));
           return cb(null, my_response.body);
       });
   };
