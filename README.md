@@ -1,0 +1,1 @@
+This repo contains the modified code for the course [AWS Fundamentals: Building Serverless Applications](https://www.coursera.org/learn/aws-fundamentals-building-serverless-applications) to make it work with the Amazon Lex V2 API. It's not the cleanest but it worked for me.
