@@ -4,27 +4,31 @@ function handler(event, context, callback){
         USER_ID_STR = event.user_id_str,
         AWS = require("aws-sdk"),
         LEXRUNTIME = {},
-        BOT_NAME_STR = "WeatherCatBot",
-        BOT_ALIAS_STR = "$LATEST",
-        sessionAttributes = {
-
-        },
+        //BOT_NAME_STR = "WeatherCatBot",
+        //BOT_ALIAS_STR = "$LATEST",
+        // In lex v2 API botId and botAliasId replace botName and botAlias
+        // these ids can be found in the lex console
+        BOT_ID = "",
+        BOT_ALIAS_ID = "",
+        LOCALE_ID = "en_US",
+        //sessionAttributes = {},
         params = {};
     
     AWS.config.update({
         region: "us-east-1"
     });
     
-    LEXRUNTIME = new AWS.LexRuntime();
+    LEXRUNTIME = new AWS.LexRuntimeV2();
 
     params = {
-        botAlias: BOT_ALIAS_STR,
-        botName: BOT_NAME_STR,
-        inputText: MESSAGE_STR,
-        userId: USER_ID_STR,
-        sessionAttributes: sessionAttributes
+        botAliasId: BOT_ALIAS_ID,
+        botId: BOT_ID,
+        text: MESSAGE_STR,
+        sessionId: USER_ID_STR,
+        localeId: LOCALE_ID
+        //sessionAttributes: sessionAttributes
     };
-    LEXRUNTIME.postText(params, function(error, data){
+    LEXRUNTIME.recognizeText(params, function(error, data){
         var response = {};
         if(error){
             console.log(error, error.stack);
