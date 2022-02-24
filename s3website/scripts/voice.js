@@ -49,7 +49,9 @@ function sendToCatBot(message_str){
 	g_ajaxer(G_API_GATEWAY_URL_STR, params, ok_cb, fail_cb);
 }
 
-function fail_cb(error){
+function fail_cb(request, status, error){
+	console.log(request.responseText)
+	console.log(status)
 	console.error(error);
 	newBubble("gorgeous_catbot", "Your cat looks at you as if you are stupid, try again");
 	$listen_to_me_btn
@@ -80,6 +82,7 @@ function ok_cb(response){
 	// debugger;
 	//could be an error response that returns a 200
 	//catch [LATER]
+	console.log("Response: " + JSON.stringify(response))
 	var 
 		message_str = "",
 		//JSON.parse(response.body).message,
@@ -87,15 +90,16 @@ function ok_cb(response){
 
 // console.info(JSON.parse(response.body).dialogState, report_str);
 
-
-	if(response.dialogState === "Fulfilled"){ // "ReadyForFulfillment"){
+	console.log("Intent state: " + response.sessionState.intent.state)
+	if(response.sessionState.intent.state === "Fulfilled"){ // "ReadyForFulfillment"){
 
 		var 
-			city_str = response.sessionAttributes.city_str,
-			temp_int = Number(response.sessionAttributes.temp_str);
+			city_str = response.sessionState.sessionAttributes.city_str,
+			temp_int = Number(response.sessionState.sessionAttributes.temp_str);
 
 
-
+		console.log("City: " + city_str)
+		console.log("Temp: " + temp_int)
 		message_str = "Ok, so you want to know if your cat can go outside today in " 
 				+ city_str
 				+ ". Let me check the tubes...one sec";
@@ -116,10 +120,19 @@ function ok_cb(response){
 		// 			+ response.city_str 
 		// 			+ " " 
 		// 			+ response.county_str; //SHOULD BE COUNTRY .missing R
-		newBubble("gorgeous_catbot", response.message);
-		$listen_to_me_btn
-				.text("Push to talk")
-				.prop("disabled", false);
+		if (typeof response.messages !== 'undefined') {
+			console.log("Messages:" + JSON.stringify(response.messages))
+			newBubble("gorgeous_catbot", response.messages[0].content);
+			$listen_to_me_btn
+					.text("Push to talk")
+					.prop("disabled", false);
+		} else {
+			newBubble("gorgeous_catbot", "Sorry, could you repeat please?");
+			$listen_to_me_btn
+					.text("Push to talk")
+					.prop("disabled", false);
+		}
+		
 	}
 }
 
